@@ -1,0 +1,9 @@
+{
+  "name": "copopalhinhas-weekly-report",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": { "report": "node src/index.js" },
+  "engines": { "node": ">=20" },
+  "dependencies": { "nodemailer": "^6.9.14", "pptxgenjs": "^3.12.0" }
+}
