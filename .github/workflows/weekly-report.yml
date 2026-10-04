@@ -1,0 +1,41 @@
+name: Report semanal Copopalhinhas
+
+on:
+  schedule:
+    - cron: "0 7 * * 1"   # segunda-feira 07:00 UTC (08:00 Lisboa no inverno, 09:00 no verão)
+  workflow_dispatch:       # permite correr à mão em Actions → Run workflow
+
+defaults:
+  run:
+    working-directory: copopalhinhas-weekly-report
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: copopalhinhas-weekly-report/package-lock.json
+      - run: npm ci
+      - run: npm run report
+        env:
+          WINDSOR_API_KEY: ${{ secrets.WINDSOR_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          MAIL_TO: ${{ vars.MAIL_TO || 'miguel@digitalxperience.pt' }}
+          MAIL_CC: ${{ vars.MAIL_CC }}
+          GA4_ID: ${{ vars.GA4_ID }}
+          ADS_ID: ${{ vars.ADS_ID }}
+          GSC_ID: ${{ vars.GSC_ID }}
+          META_ID: ${{ vars.META_ID }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: report
+          path: copopalhinhas-weekly-report/out/
+          retention-days: 30
