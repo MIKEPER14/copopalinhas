@@ -2,8 +2,8 @@ name: Report semanal Copopalhinhas
 
 on:
   schedule:
-    - cron: "0 7 * * 1"   # segunda-feira 07:00 UTC (08:00 Lisboa no inverno, 09:00 no verão)
-  workflow_dispatch:       # permite correr à mão em Actions → Run workflow
+    - cron: "0 7 * * 1"
+  workflow_dispatch:
 
 defaults:
   run:
@@ -17,10 +17,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: copopalhinhas-weekly-report/package-lock.json
-      - run: npm ci
+          node-version: 24
+      - run: ls -la && ls -la src
+      - run: npm install
       - run: npm run report
         env:
           WINDSOR_API_KEY: ${{ secrets.WINDSOR_API_KEY }}
