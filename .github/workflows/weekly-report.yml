@@ -7,7 +7,7 @@ on:
 
 defaults:
   run:
-    working-directory: copopalhinhas-weekly-report
+    working-directory: copopalhinhas-weekly-report/copopalhinhas-weekly-report
 
 jobs:
   report:
@@ -36,5 +36,5 @@ jobs:
         if: always()
         with:
           name: report
-          path: copopalhinhas-weekly-report/out/
+          path: copopalhinhas-weekly-report/copopalhinhas-weekly-report/out/
           retention-days: 30
