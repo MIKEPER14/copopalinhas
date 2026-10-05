@@ -1,0 +1,40 @@
+name: Report mensal Copopalhinhas
+
+on:
+  schedule:
+    - cron: "0 7 2 * *"   # dia 2 de cada mês, 07:00 UTC (deixa o Search Console fechar o mês)
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: copopalhinhas-weekly-report/copopalhinhas-weekly-report
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install
+      - run: npm run report
+        env:
+          PERIODO: mensal
+          WINDSOR_API_KEY: ${{ secrets.WINDSOR_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          MAIL_TO: ${{ vars.MAIL_TO || 'miguel@digitalxperience.pt' }}
+          MAIL_CC: ${{ vars.MAIL_CC }}
+          GA4_ID: ${{ vars.GA4_ID }}
+          ADS_ID: ${{ vars.ADS_ID }}
+          GSC_ID: ${{ vars.GSC_ID }}
+          META_ID: ${{ vars.META_ID }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: report-mensal
+          path: copopalhinhas-weekly-report/copopalhinhas-weekly-report/out/
+          retention-days: 90
