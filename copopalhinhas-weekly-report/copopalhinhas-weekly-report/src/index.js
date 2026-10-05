@@ -10,7 +10,7 @@ const { enviar } = require('./mail');
   console.log(`Semana ${d.label_cur} vs ${d.label_prev}`);
   const dados = await recolher(d);
   console.log(`Dados: ${dados.site.sessions.cur} sessões, ${dados.site.ecommerce_purchases.cur} encomendas, ${dados.site.purchase_revenue.cur} €`);
-  const analise = process.env.SKIP_CLAUDE ? { titulo: 'Report semanal', veredicto: '(análise desativada)', destaques: [], alertas: [], acoes: [] } : await analisar(dados);
+  const analise = process.env.SKIP_CLAUDE ? JSON.parse(process.env.ANALISE_MOCK || '{"titulo":"Report semanal"}') : await analisar(dados);
   console.log(`Análise: ${analise.titulo}`);
   const pptx = await buildDeck({ dados, analise });
   const filename = `Copopalhinhas_Report_Semanal_${d.cur_to.replace(/-/g, '')}.pptx`;

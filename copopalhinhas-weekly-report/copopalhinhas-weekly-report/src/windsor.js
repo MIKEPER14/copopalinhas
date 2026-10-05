@@ -14,12 +14,13 @@ async function get(conn, fields, d) {
 }
 
 async function recolher(d) {
-  const [ga, gaCh, ads, gsc, meta] = await Promise.all([
+  const [ga, gaCh, gaDev, ads, gsc, meta] = await Promise.all([
     get('googleanalytics4', 'date,sessions,active_users,add_to_carts,checkouts,ecommerce_purchases,purchase_revenue', d),
     get('googleanalytics4', 'date,session_default_channel_group,sessions,ecommerce_purchases,purchase_revenue', d),
+    get('googleanalytics4', 'date,devicecategory,sessions,ecommerce_purchases,purchase_revenue', d),
     get('google_ads', 'date,campaign,impressions,clicks,spend,conversions,conversion_value', d),
     get('searchconsole', 'date,query,clicks,impressions', d),
-    get('facebook', 'date,campaign,impressions,link_clicks,spend', d),
+    get('facebook', 'date,campaign,impressions,reach,link_clicks,spend,actions_purchase', d),
   ]);
   const inCur = r => r.date >= d.cur_from && r.date <= d.cur_to;
   const inPrev = r => r.date >= d.prev_from && r.date <= d.prev_to;
@@ -45,12 +46,17 @@ async function recolher(d) {
   const seo = kpi(gsc, ['clicks', 'impressions']); seo.ctr = ratio(seo.clicks, seo.impressions, 100);
   const brand = kpi(gsc.filter(r => BRAND.includes((r.query || '').toLowerCase())), ['clicks', 'impressions']); brand.ctr = ratio(brand.clicks, brand.impressions, 100);
 
+  const dispositivos = byDim(gaDev, 'devicecategory', ['sessions', 'ecommerce_purchases', 'purchase_revenue']);
+  const q = byDim(gsc, 'query', ['clicks', 'impressions']);
+  const marca = q.filter(x => BRAND.includes(x.name.toLowerCase()));
+  const genericas = q.filter(x => !BRAND.includes(x.name.toLowerCase()) && x.impressions.cur >= 300 && x.clicks.cur / Math.max(1, x.impressions.cur) < 0.005).slice(0, 6);
+  const metaT = kpi(meta, ['impressions', 'reach', 'link_clicks', 'spend', 'actions_purchase']);
   return {
     periodo: { atual: d.label_cur, anterior: d.label_prev, cur_from: d.cur_from, cur_to: d.cur_to },
     site, canais: byDim(gaCh, 'session_default_channel_group', ['sessions', 'ecommerce_purchases', 'purchase_revenue']),
     google_ads: { total: adsT, campanhas: byDim(ads, 'campaign', ['clicks', 'spend', 'conversions', 'conversion_value']) },
-    seo: { total: seo, marca: brand, top_impressoes: byDim(gsc, 'query', ['clicks', 'impressions']).slice(0, 10) },
-    meta_ads: kpi(meta, ['impressions', 'link_clicks', 'spend']),
+    seo: { total: seo, marca: brand, consultas_marca: marca, consultas_genericas: genericas, top_impressoes: q.slice(0, 10) },
+    meta_ads: metaT, dispositivos,
     diario: ga.filter(r => inCur(r) || inPrev(r)).sort((x, y) => x.date < y.date ? -1 : 1).map(r => ({ date: r.date, sessions: +r.sessions || 0, purchase_revenue: +r.purchase_revenue || 0, ecommerce_purchases: +r.ecommerce_purchases || 0 })),
   };
 }

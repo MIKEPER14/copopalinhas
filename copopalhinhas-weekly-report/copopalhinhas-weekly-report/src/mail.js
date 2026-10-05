@@ -10,11 +10,10 @@ async function enviar({ dados, analise, pptx, filename }) {
 <div style="font-size:11px;letter-spacing:2px;color:#F26A21;font-weight:700">COPOPALHINHAS.PT · REPORT SEMANAL</div>
 <h2 style="margin:6px 0 2px">${analise.titulo}</h2>
 <div style="color:#777;font-size:13px">Semana ${P.atual} vs ${P.anterior}</div>
-<div style="background:#FFF1EA;border-radius:8px;padding:12px 14px;margin:14px 0">${analise.veredicto}</div>
+${(analise.sumario || []).map(c => `<div style="background:#FFF1EA;border-radius:8px;padding:10px 14px;margin:10px 0"><b>${c.titulo}</b><br>${c.texto}</div>`).join('')}
 <p style="font-size:13px"><b>Receita</b> ${eur(s.purchase_revenue.cur)} (${pc(s.purchase_revenue.pct)}) · <b>Encomendas</b> ${s.ecommerce_purchases.cur} (${pc(s.ecommerce_purchases.pct)}) · <b>Sessões</b> ${s.sessions.cur} (${pc(s.sessions.pct)})</p>
-<h3 style="font-size:14px;margin:14px 0 4px">Destaques</h3><ul style="margin:0 0 0 18px;padding:0">${li(analise.destaques)}</ul>
-<h3 style="font-size:14px;margin:14px 0 4px;color:#C0392B">Alertas</h3><ul style="margin:0 0 0 18px;padding:0">${li(analise.alertas)}</ul>
-<h3 style="font-size:14px;margin:14px 0 4px">Ações</h3><ul style="margin:0 0 0 18px;padding:0">${li(analise.acoes)}</ul>
+<h3 style="font-size:14px;margin:14px 0 4px">Ações desta semana</h3><ul style="margin:0 0 0 18px;padding:0">${li((analise.acoes || []).map(x => typeof x === 'string' ? x : `[${x.prioridade}] ${x.acao} (${x.resp})`))}</ul>
+<h3 style="font-size:14px;margin:14px 0 4px">Decisões pedidas</h3><ul style="margin:0 0 0 18px;padding:0">${li(analise.decisoes)}</ul>
 <p style="font-size:12px;color:#777;margin-top:18px">Deck completo em anexo. Gerado automaticamente (Windsor.ai + Claude). Dados GA4 sujeitos a validação.</p></div>`;
   await t.sendMail({
     from: `"Digital Xperience" <${process.env.SMTP_USER}>`, to: process.env.MAIL_TO, cc: process.env.MAIL_CC || undefined,
