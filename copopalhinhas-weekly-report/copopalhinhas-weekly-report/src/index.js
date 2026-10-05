@@ -7,13 +7,13 @@ const { enviar } = require('./mail');
 
 (async () => {
   const d = periodos();
-  console.log(`Semana ${d.label_cur} vs ${d.label_prev}`);
+  console.log(`${d.nome} ${d.label_cur} vs ${d.label_prev} (modo ${d.modo})`);
   const dados = await recolher(d);
   console.log(`Dados: ${dados.site.sessions.cur} sessões, ${dados.site.ecommerce_purchases.cur} encomendas, ${dados.site.purchase_revenue.cur} €`);
   const analise = process.env.SKIP_CLAUDE ? JSON.parse(process.env.ANALISE_MOCK || '{"titulo":"Report semanal"}') : await analisar(dados);
   console.log(`Análise: ${analise.titulo}`);
   const pptx = await buildDeck({ dados, analise });
-  const filename = `Copopalhinhas_Report_Semanal_${d.cur_to.replace(/-/g, '')}.pptx`;
+  const filename = `Copopalhinhas_Report_${d.modo === 'mensal' ? 'Mensal' : 'Semanal'}_${d.cur_to.replace(/-/g, '')}.pptx`;
   fs.mkdirSync('out', { recursive: true });
   fs.writeFileSync(`out/${filename}`, pptx);
   fs.writeFileSync('out/dados.json', JSON.stringify({ dados, analise }, null, 1));

@@ -22,15 +22,16 @@ function buildDeck({ dados, analise }) {
   if (typeof a === "string") { try { a = JSON.parse(a.replace(/```json|```/g, "").trim()); } catch { a = {}; } }
   a = Object.assign({ titulo: "Report semanal", sumario: [], leitura_receita: [], leitura_canais: [], diagnostico_ads: [], leitura_seo: "", leitura_meta: [], leitura_dispositivos: [], acoes: [], decisoes: [] }, a || {});
   const P = d.periodo, site = d.site, g = d.google_ads.total, seo = d.seo.total, b = d.seo.marca, m = d.meta_ads;
-  const sub = `Semana ${P.atual} vs ${P.anterior}`;
+  const NOME = P.nome || 'Semana', NOMEM = P.nome_min || 'semana', MENSAL = P.modo === 'mensal';
+  const sub = `${NOME} ${P.atual} vs ${P.anterior}`;
   const hoje = new Date();
-  const proxima = new Date(hoje); proxima.setDate(hoje.getDate() + ((8 - hoje.getDay()) % 7 || 7));
+  const proxima = new Date(hoje); if (MENSAL) { proxima.setMonth(hoje.getMonth() + 1, 2); } else { proxima.setDate(hoje.getDate() + ((8 - hoje.getDay()) % 7 || 7)); }
 
   const pres = new pptxgen(); pres.layout = "LAYOUT_WIDE"; pres.author = "Digital Xperience";
-  pres.title = `Copopalhinhas — Report semanal ${P.atual}`;
+  pres.title = `Copopalhinhas — Report ${NOMEM === 'mês' ? 'mensal' : 'semanal'} ${P.atual}`;
   let n = 0;
   const title = (s, t, st) => { s.addText(t, { x: M, y: 0.4, w: W - 2 * M, h: 0.75, fontFace: FH, fontSize: 30, bold: true, color: C.ink, margin: 0 }); if (st) s.addText(st, { x: M, y: 1.12, w: W - 2 * M, h: 0.4, fontFace: FB, fontSize: 14, color: C.grey, margin: 0 }); };
-  const footer = (s, dark) => { const col = dark ? "8A8A8A" : "9A9A9A"; s.addText(`Copopalhinhas · Report semanal ${P.atual} · Digital Xperience`, { x: M, y: H - 0.45, w: 8, h: 0.3, fontFace: FB, fontSize: 9, color: col, margin: 0 }); s.addText(String(n), { x: W - M - 1, y: H - 0.45, w: 1, h: 0.3, fontFace: FB, fontSize: 9, color: col, align: "right", margin: 0 }); };
+  const footer = (s, dark) => { const col = dark ? "8A8A8A" : "9A9A9A"; s.addText(`Copopalhinhas · Report ${MENSAL ? 'mensal' : 'semanal'} ${P.atual} · Digital Xperience`, { x: M, y: H - 0.45, w: 8, h: 0.3, fontFace: FB, fontSize: 9, color: col, margin: 0 }); s.addText(String(n), { x: W - M - 1, y: H - 0.45, w: 1, h: 0.3, fontFace: FB, fontSize: 9, color: col, align: "right", margin: 0 }); };
   const box = (s, x, y, w, h, fill = C.light) => s.addShape(pres.ShapeType.roundRect, { x, y, w, h, fill: { color: fill }, line: { color: fill }, rectRadius: 0.08 });
   const stat = (s, x, y, w, h, value, label, deltaTxt, deltaCol, vs = 26) => {
     box(s, x, y, w, h);
@@ -54,7 +55,7 @@ function buildDeck({ dados, analise }) {
     s.addShape(pres.ShapeType.ellipse, { x: 9.2, y: -1.8, w: 6.5, h: 6.5, fill: { color: C.orange }, line: { color: C.orange } });
     s.addText("COPOPALHINHAS.PT", { x: M, y: 2.2, w: 8, h: 0.4, fontFace: FB, fontSize: 14, color: C.orange, bold: true, charSpacing: 4, margin: 0 });
     s.addText("Report de Performance", { x: M, y: 2.65, w: 9, h: 0.9, fontFace: FH, fontSize: 44, bold: true, color: C.white, margin: 0 });
-    s.addText(`Semana ${P.atual} vs ${P.anterior}`, { x: M, y: 3.55, w: 9, h: 0.8, fontFace: FH, fontSize: 32, color: C.white, margin: 0 });
+    s.addText(`${NOME} ${P.atual} vs ${P.anterior}`, { x: M, y: 3.55, w: 9, h: 0.8, fontFace: FH, fontSize: 32, color: C.white, margin: 0 });
     s.addText("SEO · Google Ads · Meta Ads · Tracking · Próximos passos", { x: M, y: 4.5, w: 9, h: 0.4, fontFace: FB, fontSize: 14, color: "CFCFCF", margin: 0 });
     s.addText(`Digital Xperience · ${hoje.toLocaleDateString("pt-PT", { day: "numeric", month: "long", year: "numeric" })}\nDados via Windsor.ai (GA4, Google Ads, Search Console, Meta Ads) · análise por Claude · gerado automaticamente`, { x: M, y: 6.3, w: 10, h: 0.7, fontFace: FB, fontSize: 11, color: "9A9A9A", margin: 0 }); }
 
@@ -82,23 +83,24 @@ function buildDeck({ dados, analise }) {
     footer(s); }
 
   // 4 Receita diária
-  { const s = pres.addSlide(); n++; title(s, "Receita diária: semana atual vs anterior", "Sobreposição dia a dia (segunda a domingo) · GA4 purchase_revenue · €");
-    const dias = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+  { const s = pres.addSlide(); n++; title(s, `Receita diária: ${NOMEM} atual vs anterior`, MENSAL ? "Sobreposição dia a dia (1–31) · GA4 purchase_revenue · €" : "Sobreposição dia a dia (segunda a domingo) · GA4 purchase_revenue · €");
+    const dias = MENSAL ? Array.from({ length: 31 }, (_, i) => String(i + 1)) : ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+    const ND = dias.length;
     const cur = (d.diario || []).filter(r => r.date >= P.cur_from && r.date <= P.cur_to).map(r => +r.purchase_revenue || 0);
     const prev = (d.diario || []).filter(r => r.date < P.cur_from).map(r => +r.purchase_revenue || 0);
-    const pad = v => v.concat(Array(Math.max(0, 7 - v.length)).fill(null)).slice(0, 7);
+    const pad = v => v.concat(Array(Math.max(0, ND - v.length)).fill(null)).slice(0, ND);
     s.addChart(pres.ChartType.line, [{ name: `Anterior (${P.anterior})`, labels: dias, values: pad(prev) }, { name: `Atual (${P.atual})`, labels: dias, values: pad(cur) }],
-      { x: M, y: 1.7, w: 8.3, h: 5.1, chartColors: ["BDBDBD", C.orange], lineSize: 3, lineDataSymbol: "circle", lineDataSymbolSize: 6, showLegend: true, legendPos: "t", legendFontSize: 11, legendFontFace: FB, catAxisLabelFontSize: 11, valAxisLabelFontSize: 10, catAxisLabelColor: C.ink, valAxisLabelColor: C.grey, valGridLine: { color: C.line, size: 0.5 }, catGridLine: { style: "none" }, valAxisLabelFormatCode: "#,##0" });
+      { x: M, y: 1.7, w: 8.3, h: 5.1, chartColors: ["BDBDBD", C.orange], lineSize: 3, lineDataSymbol: "circle", lineDataSymbolSize: 6, showLegend: true, legendPos: "t", legendFontSize: 11, legendFontFace: FB, catAxisLabelFontSize: MENSAL ? 9 : 11, valAxisLabelFontSize: 10, catAxisLabelColor: C.ink, valAxisLabelColor: C.grey, valGridLine: { color: C.line, size: 0.5 }, catGridLine: { style: "none" }, valAxisLabelFormatCode: "#,##0", lineDataSymbolSize: MENSAL ? 4 : 6 });
     box(s, 9.2, 1.7, 3.53, 5.1); s.addText("O que o gráfico mostra", { x: 9.45, y: 1.9, w: 3.1, h: 0.4, fontFace: FH, fontSize: 15, bold: true, color: C.ink, margin: 0 });
     const best = cur.length ? cur.indexOf(Math.max(...cur)) : -1;
-    bullets(s, list(a.leitura_receita, [`Total ${eur(site.purchase_revenue.cur)} vs ${eur(site.purchase_revenue.prev)} (${pctTxt(delta(site.purchase_revenue))}).`, best >= 0 ? `Melhor dia: ${dias[best]} (${eur(cur[best])}).` : ""].filter(Boolean)), 9.45, 2.4, 3.1, 4.3, 11.5);
+    bullets(s, list(a.leitura_receita, [`Total ${eur(site.purchase_revenue.cur)} vs ${eur(site.purchase_revenue.prev)} (${pctTxt(delta(site.purchase_revenue))}).`, best >= 0 ? `Melhor dia: ${MENSAL ? 'dia ' : ''}${dias[best]} (${eur(cur[best])}).` : ""].filter(Boolean)), 9.45, 2.4, 3.1, 4.3, 11.5);
     footer(s); }
 
   // 5 Canais
   { const s = pres.addSlide(); n++; title(s, "Desempenho por canal", `${sub} · sessões, encomendas e receita (GA4)`);
     const rows = d.canais.slice(0, 9).map(c => [c.name === "Unassigned" ? "Unassigned *" : c.name, num(c.sessions.cur), num(c.sessions.prev), num(c.ecommerce_purchases.cur), num(c.ecommerce_purchases.prev), eurK(c.purchase_revenue.cur), eurK(c.purchase_revenue.prev), { text: pctTxt(c.purchase_revenue.pct), color: pctCol(c.purchase_revenue.pct), bold: true }]);
     table(s, ["Canal", "Sessões atual", "Sessões ant.", "Enc. atual", "Enc. ant.", "Receita atual", "Receita ant.", "Δ Receita"], rows, M, 1.7, 8.2, [2.0, 0.9, 0.9, 0.75, 0.75, 0.95, 0.95, 1.0], 10.5, 0.36);
-    s.addText(`* Unassigned = compras sem sessão atribuída (${dec(site.unassigned_share, 1)}% das encomendas da semana). Períodos com o mesmo n.º de dias — variações diretamente comparáveis.`, { x: M, y: 5.45, w: 8.2, h: 0.6, fontFace: FB, fontSize: 9.5, color: C.grey, italic: true, margin: 0 });
+    s.addText(`* Unassigned = compras sem sessão atribuída (${dec(site.unassigned_share, 1)}% das encomendas do ${NOMEM}).${MENSAL ? '' : ' Períodos com o mesmo n.º de dias — variações diretamente comparáveis.'}`, { x: M, y: 5.45, w: 8.2, h: 0.6, fontFace: FB, fontSize: 9.5, color: C.grey, italic: true, margin: 0 });
     box(s, 9.1, 1.7, 3.63, 5.1, C.tint); s.addText("Leitura", { x: 9.35, y: 1.9, w: 3.2, h: 0.4, fontFace: FH, fontSize: 15, bold: true, color: C.ink, margin: 0 });
     bullets(s, a.leitura_canais, 9.35, 2.4, 3.2, 4.3, 11);
     footer(s); }
@@ -146,14 +148,14 @@ function buildDeck({ dados, analise }) {
     footer(s); }
 
   // 9 Tracking
-  { const s = pres.addSlide(); n++; title(s, "Qualidade de dados e tracking", "O que os números desta semana revelam sobre a medição");
+  { const s = pres.addSlide(); n++; title(s, "Qualidade de dados e tracking", `O que os números deste ${NOMEM} revelam sobre a medição`);
     const mp = m.actions_purchase || { cur: 0 };
     const atcRatio = site.ecommerce_purchases.cur ? site.add_to_carts.cur / site.ecommerce_purchases.cur : 0;
     const items = [
       { h: site.add_to_carts.cur > 0 ? "add_to_cart a medir" : "add_to_cart a zero", t: `${num(site.add_to_carts.cur)} add_to_cart para ${num(site.ecommerce_purchases.cur)} compras (${dec(atcRatio, 1)} por compra). ${atcRatio < 1.5 ? "Rácio demasiado baixo — o evento não dispara em todos os fluxos." : "Rácio plausível; já permite medir abandono de carrinho."}`, c: atcRatio < 1.5 ? "red" : "green" },
       { h: site.checkouts.cur < site.ecommerce_purchases.cur ? "begin_checkout não é fiável" : "begin_checkout a medir", t: `${num(site.checkouts.cur)} checkouts para ${num(site.ecommerce_purchases.cur)} compras. ${site.checkouts.cur < site.ecommerce_purchases.cur ? "O funil GA4 (carrinho → checkout → compra) não pode ser usado até o evento ser corrigido." : "Funil utilizável."}`, c: site.checkouts.cur < site.ecommerce_purchases.cur ? "red" : "green" },
       { h: `${dec(site.unassigned_share, 0)}% das compras «Unassigned»`, t: `Encomendas sem canal atribuído. ${site.unassigned_share > 15 ? "Provável disparo do purchase fora da sessão (server-side / plugin duplicado). Distorce o ROAS de todos os canais." : "Dentro do aceitável."}`, c: site.unassigned_share > 15 ? "red" : "green" },
-      { h: mp.cur ? "Meta Pixel a reportar compras" : "Meta Pixel sem compras", t: mp.cur ? `${num(mp.cur)} compras atribuídas pelo Pixel esta semana.` : `0 compras atribuídas com ${num(m.link_clicks.cur)} cliques no link. Sem Pixel + CAPI a funcionar, o Meta otimiza para cliques, não para vendas.`, c: mp.cur ? "green" : "red" },
+      { h: mp.cur ? "Meta Pixel a reportar compras" : "Meta Pixel sem compras", t: mp.cur ? `${num(mp.cur)} compras atribuídas pelo Pixel neste ${NOMEM}.` : `0 compras atribuídas com ${num(m.link_clicks.cur)} cliques no link. Sem Pixel + CAPI a funcionar, o Meta otimiza para cliques, não para vendas.`, c: mp.cur ? "green" : "red" },
       ...S.tracking_fixo,
     ];
     items.slice(0, 6).forEach((it, i) => { const x = M + (i % 3) * 4.08, y = 1.75 + Math.floor(i / 3) * 2.5, w = 3.9, h = 2.3;
@@ -175,21 +177,22 @@ function buildDeck({ dados, analise }) {
     footer(s, true); }
 
   // 11 Ações imediatas
-  { const s = pres.addSlide(); n++; title(s, "Ações imediatas — Ads, SEO e tracking", "Prioridade P0/P1 desta semana · responsável DX salvo indicação");
+  { const s = pres.addSlide(); n++; title(s, "Ações imediatas — Ads, SEO e tracking", `Prioridade P0/P1 deste ${NOMEM} · responsável DX salvo indicação`);
     const rows = (a.acoes || []).slice(0, 7).map(x => [{ text: x.prioridade || "P1", color: x.prioridade === "P0" ? C.red : C.amber, bold: true }, x.area || "", x.acao || "", x.resp || "DX", x.quando || ""]);
     table(s, ["", "Área", "Ação", "Resp.", "Quando"], rows.length ? rows : [["", "", "—", "", ""]], M, 1.7, W - 2 * M, [0.5, 1.4, 7.63, 1.3, 1.3], 10.5, 0.58, [2]);
     footer(s); }
 
   // 12 Klaviyo — porquê
   { const s = pres.addSlide(); n++; title(s, "Klaviyo — Marketing Automation", "Porquê agora e o que muda para a Copopalhinhas");
-    s.addText("O que os dados desta semana dizem", { x: M, y: 1.7, w: 6, h: 0.4, fontFace: FH, fontSize: 16, bold: true, color: C.ink, margin: 0 });
-    const atcDia = site.add_to_carts.cur / 7, compDia = site.ecommerce_purchases.cur / 7;
+    s.addText(`O que os dados deste ${NOMEM} dizem`, { x: M, y: 1.7, w: 6, h: 0.4, fontFace: FH, fontSize: 16, bold: true, color: C.ink, margin: 0 });
+    const NDIAS = MENSAL ? Math.round((new Date(P.cur_to) - new Date(P.cur_from)) / 864e5) + 1 : 7;
+    const atcDia = site.add_to_carts.cur / NDIAS, compDia = site.ecommerce_purchases.cur / NDIAS;
     const email = (d.canais || []).find(c => c.name === "Email") || { sessions: { cur: 0 } };
-    stat(s, M, 2.2, 2.9, 1.35, "~" + num(atcDia), "add_to_cart / dia", site.add_to_carts.cur ? `${num(site.add_to_carts.cur)} na semana` : "evento ainda não mede", site.add_to_carts.cur ? C.grey : C.red, 24);
+    stat(s, M, 2.2, 2.9, 1.35, "~" + num(atcDia), "add_to_cart / dia", site.add_to_carts.cur ? `${num(site.add_to_carts.cur)} no ${NOMEM}` : "evento ainda não mede", site.add_to_carts.cur ? C.grey : C.red, 24);
     stat(s, M + 3.05, 2.2, 2.9, 1.35, "~" + num(compDia), "compras / dia", atcDia > compDia ? `≈ ${dec((1 - compDia / atcDia) * 100, 0)}% dos carrinhos não fecham` : "sem baseline de carrinhos", C.amber, 24);
-    stat(s, M, 3.7, 2.9, 1.35, num(email.sessions.cur), "sessões de Email na semana", email.sessions.cur ? "canal residual" : "canal inexistente hoje", C.red, 24);
+    stat(s, M, 3.7, 2.9, 1.35, num(email.sessions.cur), `sessões de Email no ${NOMEM}`, email.sessions.cur ? "canal residual" : "canal inexistente hoje", C.red, 24);
     stat(s, M + 3.05, 3.7, 2.9, 1.35, eur(site.aov.cur), "ticket médio", "valor por carrinho recuperado", C.grey, 24);
-    const rec = atcDia > compDia ? (atcDia - compDia) * 7 * site.aov.cur : 0;
+    const rec = atcDia > compDia ? (atcDia - compDia) * 30 * site.aov.cur / 4.3 : 0;
     s.addText(rec ? `Estimativa conservadora: recuperar 8–12% dos carrinhos abandonados a ${eur(site.aov.cur)} de ticket médio representa ${eurK(rec * 0.08 * 4.3)}–${eurK(rec * 0.12 * 4.3)} / mês de receita incremental.` : "Quando o add_to_cart estiver a medir de forma fiável, esta estimativa é calculada automaticamente a partir dos carrinhos e do ticket médio.", { x: M, y: 5.3, w: 6.0, h: 1.4, fontFace: FB, fontSize: 12, color: C.ink, italic: true, margin: 0, valign: "top" });
     box(s, 7.1, 1.7, 5.63, 5.1, C.tint); s.addText("Porquê Klaviyo", { x: 7.35, y: 1.9, w: 5.2, h: 0.4, fontFace: FH, fontSize: 16, bold: true, color: C.ink, margin: 0 });
     bullets(s, S.klaviyo_porque, 7.35, 2.4, 5.15, 4.3, 11.5);
@@ -229,7 +232,7 @@ function buildDeck({ dados, analise }) {
     s.addText("Decisões pedidas à Copopalhinhas", { x: M, y: 0.6, w: 11, h: 0.8, fontFace: FH, fontSize: 32, bold: true, color: C.white, margin: 0 });
     const dec_ = list(a.decisoes);
     s.addText(dec_.map((t, i) => ({ text: t, options: { bullet: { type: "number" }, breakLine: i < dec_.length - 1, paraSpaceAfter: 12 } })), { x: 4.2, y: 1.8, w: 8.5, h: 3.6, fontFace: FB, fontSize: 16, color: "F0F0F0", valign: "top", margin: 0 });
-    s.addText(`Próximo report: ${proxima.toLocaleDateString("pt-PT", { day: "numeric", month: "long" })}, com a semana seguinte fechada.`, { x: 4.2, y: 5.6, w: 8.5, h: 0.5, fontFace: FB, fontSize: 14, color: C.orange, bold: true, margin: 0 });
+    s.addText(`Próximo report: ${proxima.toLocaleDateString("pt-PT", { day: "numeric", month: "long" })}, com ${MENSAL ? 'o mês' : 'a semana'} seguinte fechad${MENSAL ? 'o' : 'a'}.`, { x: 4.2, y: 5.6, w: 8.5, h: 0.5, fontFace: FB, fontSize: 14, color: C.orange, bold: true, margin: 0 });
     s.addText(`Digital Xperience · Fontes: Windsor.ai (GA4, Google Ads, Search Console, Meta Ads) · Dados extraídos a ${hoje.toLocaleDateString("pt-PT")} · análise gerada por Claude`, { x: 4.2, y: 6.3, w: 8.5, h: 0.6, fontFace: FB, fontSize: 10, color: "9A9A9A", margin: 0 });
     footer(s, true); }
 

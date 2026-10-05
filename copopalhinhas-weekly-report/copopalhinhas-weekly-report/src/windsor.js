@@ -52,7 +52,7 @@ async function recolher(d) {
   const genericas = q.filter(x => !BRAND.includes(x.name.toLowerCase()) && x.impressions.cur >= 300 && x.clicks.cur / Math.max(1, x.impressions.cur) < 0.005).slice(0, 6);
   const metaT = kpi(meta, ['impressions', 'reach', 'link_clicks', 'spend', 'actions_purchase']);
   return {
-    periodo: { atual: d.label_cur, anterior: d.label_prev, cur_from: d.cur_from, cur_to: d.cur_to },
+    periodo: { modo: d.modo || 'semanal', nome: d.nome || 'Semana', nome_min: d.nome_min || 'semana', atual: d.label_cur, anterior: d.label_prev, cur_from: d.cur_from, cur_to: d.cur_to, prev_from: d.prev_from, prev_to: d.prev_to },
     site, canais: byDim(gaCh, 'session_default_channel_group', ['sessions', 'ecommerce_purchases', 'purchase_revenue']),
     google_ads: { total: adsT, campanhas: byDim(ads, 'campaign', ['clicks', 'spend', 'conversions', 'conversion_value']) },
     seo: { total: seo, marca: brand, consultas_marca: marca, consultas_genericas: genericas, top_impressoes: q.slice(0, 10) },
