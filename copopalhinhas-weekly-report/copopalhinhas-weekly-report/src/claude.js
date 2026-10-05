@@ -17,15 +17,12 @@ async function chamar(dados, maxTokens) {
     headers: { 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
     body: JSON.stringify({
       model: process.env.CLAUDE_MODEL || 'claude-sonnet-5', max_tokens: maxTokens, system: PROMPT,
-      messages: [
-        { role: 'user', content: 'Dados da semana:\n' + JSON.stringify(dados) },
-        { role: 'assistant', content: '{' },   // pré-preenche para forçar JSON puro
-      ],
+      messages: [{ role: 'user', content: 'Dados da semana:\n' + JSON.stringify(dados) }],
     }),
   });
   const j = await r.json();
   if (!r.ok) throw new Error('Anthropic ' + r.status + ': ' + JSON.stringify(j));
-  const txt = '{' + (j.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+  const txt = (j.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
   return { txt, stop: j.stop_reason };
 }
 
